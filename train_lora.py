@@ -128,12 +128,13 @@ def main():
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    # 3. 加载基座模型（FP16）
+    # 3. 加载基座模型（FP32，Trainer 的 fp16=True 会负责混合精度）
+    #    注意：不能同时用 float16 加载 + fp16=True 训练，会导致梯度 unscale 失败
     print(f"\n[2/6] 加载基座模型: {config.BASE_MODEL}")
-    print(f"      dtype: float16")
+    print(f"      dtype: float32（混合精度由 Trainer 的 fp16=True 管理）")
     model = AutoModelForCausalLM.from_pretrained(
         config.BASE_MODEL,
-        torch_dtype=torch.float16,
+        torch_dtype=torch.float32,
         trust_remote_code=True,
         device_map="auto",
     )

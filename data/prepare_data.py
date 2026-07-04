@@ -2,7 +2,7 @@
 数据准备脚本：下载、抽样、格式转换。
 
 流程：
-1. 从 HuggingFace 下载 shibing624/medical 的 finetune/train_zh_0.json（纯中文，约 194 万条）
+1. 从 HuggingFace 直接下载 shibing624/medical 的 finetune/train_zh_0.json（纯中文，约 194 万条）
 2. 随机抽样 2000 条（seed=42 保证可复现）
 3. 字段处理：input 非空时拼成 {instruction}\n{input}，为空时只用 instruction
 4. 转换为 Qwen ChatML 指令格式
@@ -14,12 +14,13 @@
 
 import json
 import os
+import random
 import sys
 
 # 将项目根目录加入 sys.path，以便导入 config
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from datasets import load_dataset
+from huggingface_hub import hf_hub_download
 
 import config
 
@@ -49,21 +50,30 @@ def main():
     print("数据准备：下载 + 抽样 + 格式转换")
     print("=" * 60)
 
-    # 1. 下载数据集
+    # 1. 下载数据集（直接下载 JSON 文件，绕过有 bug 的自定义加载脚本）
     print(f"\n[1/4] 下载数据集: {config.DATASET_NAME}")
     print(f"      加载文件: {config.DATASET_SPLIT}")
-    dataset = load_dataset(
-        config.DATASET_NAME,
-        data_files=config.DATASET_SPLIT,
-        split="train",
+    local_path = hf_hub_download(
+        repo_id=config.DATASET_NAME,
+        filename=config.DATASET_SPLIT,
+        repo_type="dataset",
     )
-    print(f"      原始数据量: {len(dataset):,} 条")
+    print(f"      已下载到缓存: {local_path}")
+
+    # 逐行读取 JSONL（每行是一个 JSON 对象）
+    all_data = []
+    with open(local_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                all_data.append(json.loads(line))
+    print(f"      原始数据量: {len(all_data):,} 条")
 
     # 2. 随机抽样
     print(f"\n[2/4] 随机抽样: {config.DATA_SAMPLE_SIZE} 条 (seed={config.SEED})")
-    sampled = dataset.shuffle(seed=config.SEED).select(
-        range(min(config.DATA_SAMPLE_SIZE, len(dataset)))
-    )
+    rng = random.Random(config.SEED)
+    sample_size = min(config.DATA_SAMPLE_SIZE, len(all_data))
+    sampled = rng.sample(all_data, sample_size)
 
     # 3. 字段处理 + 格式转换
     print(f"\n[3/4] 转换为 ChatML 格式")
