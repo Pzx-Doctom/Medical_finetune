@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# 虚拟环境
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# 训练产物（保留目录占位，忽略内容）
+results/*
+!results/.gitkeep
+
+# 数据缓存
+data/*.arrow
+data/*.lock
+.cache/
+
+# 模型权重缓存（避免误提交大文件）
+*.safetensors
+*.ckpt
+*.bin
+*.pt
