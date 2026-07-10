@@ -36,3 +36,12 @@ data/*.lock
 *.ckpt
 *.bin
 *.pt
+
+# GGUF 模型文件（体积过大，不上传 GitHub）
+*.gguf
+
+# 合并后的模型目录
+merged_model/
+
+# llama.cpp 源码（第三方仓库，不需要提交）
+llama.cpp/

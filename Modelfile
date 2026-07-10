@@ -1,0 +1,33 @@
+# Ollama Modelfile - 医疗助手（Qwen1.5-0.5B + LoRA 微调）
+# 
+# 使用方法：
+#   1. 先运行: python merge_lora.py
+#   2. 再运行: python convert_to_gguf.py
+#   3. 导入:   ollama create medical-assistant -f Modelfile
+#   4. 运行:   ollama run medical-assistant
+#
+# 如果转换时用了不同精度（如 q4_k_m），请修改下面 FROM 的文件名。
+
+# ── 指定 GGUF 模型文件 ──
+FROM ./merged_model/medical-qwen1.5-0.5b-F16.gguf
+
+# ── ChatML 模板（Qwen 系列使用 ChatML 对话格式） ──
+TEMPLATE """{{ if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}<|im_start|>user
+{{ .Prompt }}<|im_end|>
+<|im_start|>assistant
+"""
+
+# ── 系统提示词（与训练时一致） ──
+SYSTEM """你是一个专业的医疗助手。"""
+
+# ── 生成参数（与训练配置一致） ──
+PARAMETER temperature 0.7
+PARAMETER top_p 0.9
+PARAMETER top_k 40
+PARAMETER num_predict 512
+
+# ── 停止标记 ──
+PARAMETER stop "<|im_start|>"
+PARAMETER stop "<|im_end|>"
